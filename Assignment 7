@@ -1,0 +1,47 @@
+data("mtcars")
+
+cat("First 6 rows of mtcars\n")
+head(mtcars)
+
+cat("Structure of mtcars\n")
+str(mtcars)
+
+cat("Testing 'summary' generic on mtcars\n")
+summary(mtcars)
+
+cat("Testing 'mean' generic on a data.frame (Warning expected)\n")
+
+s3_obj <- list(name = "Myself", age = 29, GPA = 3.5)
+class(s3_obj) <- "student_s3"
+
+# defining a generic 'print' method for our new S3 class
+print.student_s3 <- function(x) {
+  cat("\n--- S3 Object Output ---\n")
+  cat("Student Name:", x$name, "\n")
+  cat("Age:", x$age, "\n")
+  cat("GPA:", x$GPA, "\n")
+}
+
+# this will dispatch to print.student_s3() because of the object's class
+print(s3_obj)
+
+
+# S4 is formal. We must define the class and its slots (types) explicitly.
+setClass("student_s4",
+         slots = c(name = "character", age = "numeric", GPA = "numeric")
+)
+
+# creating an instance of the S4 object
+s4_obj <- new("student_s4", name = "Myself", age = 29, GPA = 3.5)
+
+# defining a generic method for the S4 class using setMethod()
+# for S4, the standard print equivalent is usually 'show'
+setMethod("show", "student_s4", function(object) {
+  cat("\n--- S4 Object Output ---\n")
+  cat("S4 Student Name:", object@name, "\n")
+  cat("Age:", object@age, "\n")
+  cat("GPA:", object@GPA, "\n")
+})
+
+# this will dispatch to the 'show' method we just defined for 'student_s4'
+show(s4_obj)
