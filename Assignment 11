@@ -1,0 +1,58 @@
+# Helper function to identify Tukey outliers (since it's required by the main function)
+tukey.outlier <- function(v) {
+  q <- quantile(v, probs = c(0.25, 0.75), names = FALSE)
+  iqr <- q[2] - q[1]
+  v < (q[1] - 1.5 * iqr) | v > (q[2] + 1.5 * iqr)
+}
+
+tukey_multiple_buggy <- function(x) {
+  outliers <- array(TRUE, dim = dim(x))
+  for (j in 1:ncol(x)) {
+    # BUG: using && instead of &
+    outliers[, j] <- outliers[, j] && tukey.outlier(x[, j]) 
+  }
+  outlier.vec <- vector("logical", length = nrow(x))
+  for (i in 1:nrow(x)) {
+    outlier.vec[i] <- all(outliers[i, ])
+  }
+  return(outlier.vec)
+}
+
+# Generate test data
+set.seed(123)
+test_mat <- matrix(rnorm(50), nrow = 10)
+
+# Uncommenting the line below will trigger the error:
+# tukey_multiple_buggy(test_mat)
+
+corrected_tukey <- function(x) {
+  # Defensive Programming Checks
+  if (!is.matrix(x)) {
+    stop("Error: Input 'x' must be a matrix.")
+  }
+  if (!is.numeric(x)) {
+    stop("Error: Input matrix 'x' must contain only numeric values.")
+  }
+  
+  outliers <- array(TRUE, dim = dim(x))
+  
+  for (j in seq_len(ncol(x))) {
+    # FIX: Use single '&' for element-wise logical AND
+    outliers[, j] <- outliers[, j] & tukey.outlier(x[, j])
+  }
+  
+  outlier.vec <- logical(nrow(x))
+  for (i in seq_len(nrow(x))) {
+    outlier.vec[i] <- all(outliers[i, ])
+  }
+  
+  return(outlier.vec)
+}
+
+cat("Testing corrected function...\n")
+result <- corrected_tukey(test_mat)
+print(result)
+
+# Testing defensive checks (will throw custom errors if uncommented)
+# corrected_tukey(data.frame(a = 1:5, b = 1:5)) # Fails is.matrix check
+# corrected_tukey(matrix(c("a", "b", "c", "d"), 2, 2)) # Fails is.numeric check
